@@ -200,7 +200,7 @@ class BreezeLogin:
                             logging.info("API_Session: {}".format(api_session))
 
                             return api_session
-        except(Exception, httpx.RequestError) as e:
+        except(Exception, requests.exceptions.RequestException) as e:
             logging.debug("Session Token Error : {}".format(e))
     
     async def fetch_session_token(self):
