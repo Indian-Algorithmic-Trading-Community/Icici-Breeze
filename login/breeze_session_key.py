@@ -277,7 +277,7 @@ if __name__ == "__main__":
     # or fetch it from breeze api . if token is not working (expired) within same day  
     # because of logged out or any other reason use this with hard_refresh = True
 
-    api_secret, session_token = bz.check_session_token(hard_refresh= True)
+    api_secret, session_token = bz.check_session_token(hard_refresh= False)
     print(f"API_SECRET : {api_secret} , SESSION_TOKEN : {session_token}") 
 
 
