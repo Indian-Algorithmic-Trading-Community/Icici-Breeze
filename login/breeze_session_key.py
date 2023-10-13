@@ -1,3 +1,11 @@
+'''
+:Special Thanks to the person who gave me access to his trading account to prepare the code 
+:description: Code to automate login in icici breeze
+:author: Tapan Hazarika
+:license: MIT
+'''
+__author__ = "____Tapan Hazarika____"
+
 import os
 import rsa
 import yaml
