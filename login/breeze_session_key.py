@@ -68,12 +68,6 @@ class BreezeLogin:
                 logging.debug("SessionLogin : {}".format(response.text))
 
                 if response.status_code == 200:
-                    res_cookies = response.cookies
-                    cookies = {
-                        "AlteonAPI" : res_cookies.get("AlteonAPI"),
-                        "nginx_srv_id" : res_cookies.get("nginx_srv_id")
-                        } 
-
                     soup = BeautifulSoup(response.content, 'html.parser')
                     form = soup.find('form', {'name': 'frmLog'})
 
@@ -88,7 +82,6 @@ class BreezeLogin:
 
                     response = await client.post(
                                       url = self.ROUTES["trade"],
-                                      cookies = cookies,
                                       data = {
                                         "AppKey": app_key,
                                         "time_stamp": time_stamp,
@@ -99,12 +92,6 @@ class BreezeLogin:
                     logging.debug("Tradelogin : {}".format(response.text))
 
                     if response.status_code == 200:
-                        cookies.update(
-                            {
-                                "ASP.NET_SessionId" : response.cookies.get("ASP.NET_SessionId")
-                            }
-                        )
-
                         soup = BeautifulSoup(response.content, 'html.parser')
                         login_form = soup.find('div', class_='form-group pb-2 text-center')
 
@@ -143,8 +130,7 @@ class BreezeLogin:
                         } 
 
                         response = await client.post(
-                                            url = self.ROUTES["getotp"],  
-                                            cookies = cookies,
+                                            url = self.ROUTES["getotp"], 
                                             data = data
                                         )
                         response.raise_for_status()
@@ -180,8 +166,7 @@ class BreezeLogin:
                             data.update(otp_data)
 
                             response = await client.post(
-                                            url = self.ROUTES["validate"],  
-                                            cookies = cookies,
+                                            url = self.ROUTES["validate"], 
                                             data = {
                                                 **data, 
                                                 "hiotp": pyotp.TOTP(self.totp).now()
@@ -292,7 +277,7 @@ if __name__ == "__main__":
     # or fetch it from breeze api . if token is not working (expired) within same day  
     # because of logged out or any other reason use this with hard_refresh = True
 
-    api_secret, session_token = bz.check_session_token()
+    api_secret, session_token = bz.check_session_token(hard_refresh= True)
     print(f"API_SECRET : {api_secret} , SESSION_TOKEN : {session_token}") 
 
 
