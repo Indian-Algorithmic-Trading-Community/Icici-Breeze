@@ -68,6 +68,12 @@ class BreezeLogin:
                 logging.debug("SessionLogin : {}".format(response.text))
 
                 if response.status_code == 200:
+                    res_cookies = response.cookies
+                    cookies = {
+                        "AlteonAPI" : res_cookies.get("AlteonAPI"),
+                        "nginx_srv_id" : res_cookies.get("nginx_srv_id")
+                        } 
+
                     soup = BeautifulSoup(response.content, 'html.parser')
                     form = soup.find('form', {'name': 'frmLog'})
 
@@ -82,6 +88,7 @@ class BreezeLogin:
 
                     response = await client.post(
                                       url = self.ROUTES["trade"],
+                                      cookies = cookies,
                                       data = {
                                         "AppKey": app_key,
                                         "time_stamp": time_stamp,
@@ -92,6 +99,12 @@ class BreezeLogin:
                     logging.debug("Tradelogin : {}".format(response.text))
 
                     if response.status_code == 200:
+                        cookies.update(
+                            {
+                                "ASP.NET_SessionId" : response.cookies.get("ASP.NET_SessionId")
+                            }
+                        )
+
                         soup = BeautifulSoup(response.content, 'html.parser')
                         login_form = soup.find('div', class_='form-group pb-2 text-center')
 
@@ -130,7 +143,8 @@ class BreezeLogin:
                         } 
 
                         response = await client.post(
-                                            url = self.ROUTES["getotp"], 
+                                            url = self.ROUTES["getotp"],  
+                                            cookies = cookies,
                                             data = data
                                         )
                         response.raise_for_status()
@@ -166,7 +180,8 @@ class BreezeLogin:
                             data.update(otp_data)
 
                             response = await client.post(
-                                            url = self.ROUTES["validate"], 
+                                            url = self.ROUTES["validate"],  
+                                            cookies = cookies,
                                             data = {
                                                 **data, 
                                                 "hiotp": pyotp.TOTP(self.totp).now()
@@ -183,8 +198,8 @@ class BreezeLogin:
                                 logging.info("API_Session: {}".format(api_session))
 
                                 return api_session
-        except(Exception, httpx.RequestError) as e:
-            logging.debug("Session Token Error : {}".format(e))
+        except(httpx.RequestError, Exception) as e:
+            logging.debug("Api Session Error : {}".format(e))
     
     async def fetch_session_token(self):
 
@@ -209,7 +224,7 @@ class BreezeLogin:
                 session_token = response.json().get("Success", {}).get("session_token", '')
                 logging.info("Session Token : {}".format(session_token))
                 return session_token
-        except(Exception, httpx.RequestError) as e:
+        except(httpx.RequestError, Exception) as e:
             logging.debug("Session Token Error : {}".format(e))
     
     def manage_session_data(self, data=None, operation="w"):
@@ -233,7 +248,7 @@ class BreezeLogin:
         return session_token
     
     def get_session_data(self):
-        self.token = self.get_session_token()
+        self.token = self.get_api_session()
         data = {
             "date" : self.current_date,
             "api_secret" : self.apisecret,
@@ -268,17 +283,22 @@ if __name__ == "__main__":
     #api_session = bz.get_api_session()
     #print(api_session)
 
-    # If need session_token without saving to json file to use in breezeconnect generate_session then run
+    # If need session_token without saving to json file to use in own code (not official breezeconnect)
 
     #session_token = bz.get_session_token()
     #print(f"SESSION_TOKEN : {session_token}") 
 
+    # If need session_token to use in breezeconnect generate_session then run below function.
     # It will load session token from saved file if the token is saved within same date
     # or fetch it from breeze api . if token is not working (expired) within same day  
     # because of logged out or any other reason use this with hard_refresh = True
 
     api_secret, session_token = bz.check_session_token(hard_refresh= False)
     print(f"API_SECRET : {api_secret} , SESSION_TOKEN : {session_token}") 
+
+    #   Previously, I made some mistake by thinking session token we needed for  generate_session
+    #   function of breezeconnect is same what we get as session_token. but it needs api_session token
+    #   so I corrected it. now it will save the correct session token to use with breezeconnect api.  
 
 
      
